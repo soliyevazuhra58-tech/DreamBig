@@ -209,7 +209,7 @@ export default function App() {
     <header className="topbar">
       <a className="brand" href="#"><span className="brand-mark"><Sparkles size={17}/></span><span>dreambig<span className="brand-period">.</span></span></a>
       <nav className="nav-links"><a href="#feed" className="active">Discover</a><a href="#how">How it works</a></nav>
-      <div className="top-actions"><button className="theme-toggle" onClick={() => setDarkMode(v => !v)} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} title={darkMode ? 'Light mode' : 'Dark mode'}>{darkMode ? <Sun size={16}/> : <Moon size={16}/>}</button>
+      <div className="top-actions">{profile && lastPostAt && !canPost && <span className="header-countdown"><Clock3 size={13}/><b>{countdownText}</b></span>}<button className="theme-toggle" onClick={() => setDarkMode(v => !v)} aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} title={darkMode ? 'Light mode' : 'Dark mode'}>{darkMode ? <Sun size={16}/> : <Moon size={16}/>}</button>
         {profile ? <button className="profile-chip" onClick={() => setShowProfile(true)}><span className="mini-avatar">{profile.first_name[0]}</span>@{profile.username}</button> : <button className="btn btn-quiet" onClick={startDreaming} disabled={busy}>{busy ? 'Please wait…' : 'Create DreamID'}</button>}
         <button className="btn btn-primary top-cta" onClick={() => profile ? setShowComposer(true) : void startDreaming()}>{profile ? <><Plus size={16}/> Share thought</> : <>Get started <ArrowUpRight size={16}/></>}</button>
       </div>
