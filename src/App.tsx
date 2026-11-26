@@ -88,6 +88,14 @@ export default function App() {
   async function startDreaming() {
     if (!supabase) { setNotice('Connect Supabase to create your DreamID.'); return }
     setBusy(true); setNotice('')
+    const { data: current } = await supabase.auth.getSession()
+    if (current.session) {
+      setSession(current.session)
+      await loadProfile(current.session.user.id)
+      setShowProfile(true)
+      setBusy(false)
+      return
+    }
     const { data, error } = await supabase.auth.signInAnonymously()
     if (error) setNotice(error.message)
     else if (data.session) {
