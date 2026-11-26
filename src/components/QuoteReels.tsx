@@ -23,6 +23,7 @@ export default function QuoteReels() {
   const [active, setActive] = useState(0)
   const [playing, setPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
   const current = quotes[active]
   const next = () => { setActive(value => (value + 1) % quotes.length); setProgress(0) }
   const previous = () => { setActive(value => (value - 1 + quotes.length) % quotes.length); setProgress(0) }
@@ -50,7 +51,7 @@ export default function QuoteReels() {
       <p>Swipe, pause, and find a thought worth keeping.</p>
     </div>
     <div className="quote-reels-layout">
-      <div className="quote-reel-card" key={active}>
+      <div className="quote-reel-card" key={active} onTouchStart={event => setTouchStart(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={event => { if (touchStart === null) return; const delta = event.changedTouches[0].clientX - touchStart; if (Math.abs(delta) > 45) delta < 0 ? next() : previous(); setTouchStart(null) }}>
         <div className="quote-reel-progress" aria-label={`Quote ${active + 1} of ${quotes.length}`}>
           {quotes.map((quote, index) => <span key={quote.text} className="quote-reel-track"><i style={{ width: index < active ? '100%' : index === active ? `${progress}%` : '0%' }}/></span>)}
         </div>
