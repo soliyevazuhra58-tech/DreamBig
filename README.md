@@ -9,9 +9,10 @@ DreamBig is a public motivational community. Create a DreamID, receive a unique 
 
 ## Setup
 1. Create a Supabase project.
-2. In Supabase SQL Editor, run `supabase/schema.sql`.
+2. In Supabase SQL Editor, run `supabase/schema.sql` (the connected DreamBig database is already provisioned).
 3. Copy `.env.example` to `.env` and add your Supabase project URL and anon/publishable key.
-4. Run:
+4. In Supabase Authentication settings, configure email confirmation and your production redirect URL.
+5. Run:
 
 ```bash
 npm install
