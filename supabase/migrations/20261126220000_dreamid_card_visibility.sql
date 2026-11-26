@@ -62,3 +62,16 @@ create view public.public_feed with (security_invoker = true) as
 select p.id,p.message,p.created_at,p.user_id,d.first_name,d.username,null::text as card_id
 from public.posts p join private.dreamid_public d on d.id=p.user_id;
 grant select on public.public_feed to anon, authenticated;
+
+create or replace function public.get_dreamid(target_id uuid)
+returns table (
+ id uuid, avatar_url text, first_name text, last_name text, username text,
+ date_of_birth date, gender text, country text, city text, bio text, created_at timestamptz
+)
+language sql stable security definer set search_path = pg_catalog, private
+as $$
+ select id,avatar_url,first_name,last_name,username,date_of_birth,gender,country,city,bio,created_at
+ from private.dreamid_public where id=target_id;
+$$;
+revoke execute on function public.get_dreamid(uuid) from public;
+grant execute on function public.get_dreamid(uuid) to anon, authenticated;
