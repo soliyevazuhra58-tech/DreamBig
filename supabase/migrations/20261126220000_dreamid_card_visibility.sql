@@ -39,6 +39,8 @@ from public.profiles on conflict (id) do update set
  username=excluded.username,date_of_birth=excluded.date_of_birth,gender=excluded.gender,
  country=excluded.country,city=excluded.city,bio=excluded.bio,created_at=excluded.created_at,
  visibility=excluded.visibility;
+drop trigger if exists profiles_sync_public on public.profiles;
+drop function if exists public.sync_public_profile();
 drop view if exists public.public_feed;
 drop view if exists public.dreamid_public;
 drop table if exists public.public_profiles;
