@@ -33,6 +33,12 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [lastPostAt, setLastPostAt] = useState<string | null>(null)
+  const [clock, setClock] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 30000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const loadProfile = useCallback(async (userId: string) => {
     if (!supabase) return
@@ -67,7 +73,7 @@ export default function App() {
     return () => listener.subscription.unsubscribe()
   }, [loadPosts, loadProfile])
 
-  const cooldownMs = lastPostAt ? Math.max(0, 86400000 - (Date.now() - new Date(lastPostAt).getTime())) : 0
+  const cooldownMs = lastPostAt ? Math.max(0, 86400000 - (clock - new Date(lastPostAt).getTime())) : 0
   const canPost = !lastPostAt || cooldownMs <= 0
   const cooldownText = useMemo(() => {
     if (!lastPostAt || canPost) return 'Ready when you are'
