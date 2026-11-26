@@ -31,3 +31,11 @@ Date of birth, surname, and gender are stored in the private `profiles` table. T
 
 ## Posting limit
 The 24-hour posting restriction is enforced in PostgreSQL, not just in the browser.
+
+
+## DreamID Card and privacy
+- DreamID cards show profile fields selected by each member; CardID is intentionally excluded from the card face.
+- Privacy preferences are stored on the private owner profile and mirrored into a non-exposed `private` schema for public reads.
+- Public profile fields are returned with disabled fields set to `NULL`; the raw private profile mirror is not granted to `anon` or `authenticated`.
+- Apply `supabase/migrations/20261126220000_dreamid_card_visibility.sql` to add the privacy fields and filtered public feed.
+- Default visibility: first name, username, profile photo, bio and join date visible; surname, birth date, gender, country and city hidden.
