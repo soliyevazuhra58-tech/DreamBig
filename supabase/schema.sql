@@ -85,3 +85,98 @@ before insert on public.posts
 for each row execute function public.enforce_post_cooldown();
 
 -- Authenticated users may read their own posts for cooldown UI.
+
+
+-- Hardened public profile separation: never expose private profile columns through a view.
+drop view if exists public.public_feed;
+drop view if exists public.public_profiles;
+
+create table if not exists public.public_profiles (
+  id uuid primary key references public.profiles(id) on delete cascade,
+  first_name text not null,
+  username text not null unique,
+  card_id text not null unique,
+  created_at timestamptz not null
+);
+alter table public.public_profiles enable row level security;
+drop policy if exists "Anyone can read public profiles" on public.public_profiles;
+create policy "Anyone can read public profiles"
+  on public.public_profiles for select to anon, authenticated using (true);
+grant select on public.public_profiles to anon, authenticated;
+
+create or replace function public.sync_public_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.public_profiles (id, first_name, username, card_id, created_at)
+  values (new.id, new.first_name, new.username, new.card_id, new.created_at)
+  on conflict (id) do update set
+    first_name = excluded.first_name,
+    username = excluded.username,
+    card_id = excluded.card_id,
+    created_at = excluded.created_at;
+  return new;
+end;
+$$;
+revoke execute on function public.sync_public_profile() from public, anon, authenticated;
+
+drop trigger if exists profiles_sync_public on public.profiles;
+create trigger profiles_sync_public
+after insert or update of first_name, username, card_id, created_at
+on public.profiles
+for each row execute function public.sync_public_profile();
+
+insert into public.public_profiles (id, first_name, username, card_id, created_at)
+select id, first_name, username, card_id, created_at from public.profiles
+on conflict (id) do update set
+  first_name = excluded.first_name,
+  username = excluded.username,
+  card_id = excluded.card_id,
+  created_at = excluded.created_at;
+
+create view public.public_feed with (security_invoker = true) as
+select p.id, p.message, p.created_at, p.user_id,
+       pr.first_name, pr.username, pr.card_id
+from public.posts p
+join public.public_profiles pr on pr.id = p.user_id;
+grant select on public.public_feed to anon, authenticated;
+
+-- Optimize owner checks and keep the 24-hour posting rule in the database.
+drop policy if exists "Users can read own profile" on public.profiles;
+create policy "Users can read own profile" on public.profiles
+  for select to authenticated using ((select auth.uid()) = id);
+drop policy if exists "Users can create own profile" on public.profiles;
+create policy "Users can create own profile" on public.profiles
+  for insert to authenticated with check ((select auth.uid()) = id);
+drop policy if exists "Users can update own profile" on public.profiles;
+create policy "Users can update own profile" on public.profiles
+  for update to authenticated using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
+drop policy if exists "Users can publish own posts" on public.posts;
+create policy "Users can publish own posts" on public.posts
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+
+create or replace function public.enforce_post_cooldown()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  latest_post timestamptz;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(new.user_id::text, 0));
+  select max(created_at) into latest_post
+  from public.posts where user_id = new.user_id;
+  if latest_post is not null and latest_post > now() - interval '24 hours' then
+    raise exception 'You can publish one motivational post every 24 hours.'
+      using errcode = 'P0001';
+  end if;
+  new.created_at := now();
+  return new;
+end;
+$$;
+revoke execute on function public.enforce_post_cooldown() from public, anon, authenticated;
