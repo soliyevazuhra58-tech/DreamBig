@@ -5,7 +5,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Settings, Eye, EyeOff } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
-type Profile = { id: string; first_name: string; last_name: string; username: string; card_id: string; date_of_birth: string; gender: string; created_at: string }
+type Profile = { id: string; first_name: string; last_name: string; username: string; card_id: string; date_of_birth: string; gender: string; country?: string | null; city?: string | null; bio?: string; avatar_url?: string | null; visibility?: Record<string, boolean>; created_at: string }
 type Post = { id: string; message: string; created_at: string; user_id: string; first_name: string; username: string; card_id: string }
 
 const samplePosts: Post[] = [
