@@ -40,16 +40,14 @@ drop policy if exists "Users can publish own posts" on public.posts;
 create policy "Users can publish own posts" on public.posts for insert to authenticated with check (auth.uid() = user_id);
 
 -- Expose only safe fields publicly; birthday, surname and gender remain private.
-create or replace view public.public_profiles
-with (security_invoker = true) as
+create or replace view public.public_profiles as
 select id, first_name, username, card_id, created_at
 from public.profiles;
 
 grant select on public.public_profiles to anon, authenticated;
 
 -- Feed view joins public profile details without exposing private profile columns.
-create or replace view public.public_feed
-with (security_invoker = true) as
+create or replace view public.public_feed as
 select p.id, p.message, p.created_at, p.user_id,
        pr.first_name, pr.username, pr.card_id
 from public.posts p
