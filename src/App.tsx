@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, ArrowUpRight, BadgeCheck, Clock3, Compass, Flame, Globe2, Heart, LogOut, MessageCircle, Plus, Send, ShieldCheck, Sparkles, Target, UserRound, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BadgeCheck, Clock3, Flame, Globe2, Heart, LogOut, MessageCircle, Plus, Send, ShieldCheck, Sparkles, Target, UserRound, X } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 
@@ -38,6 +38,7 @@ export default function App() {
     if (!supabase) return
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
     setProfile(data as Profile | null)
+    if (!data) setShowProfile(true)
     if (data) {
       const { data: recent } = await supabase.from('posts').select('created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle()
       setLastPostAt(recent?.created_at ?? null)
