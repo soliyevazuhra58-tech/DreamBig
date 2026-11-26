@@ -99,12 +99,6 @@ export default function App() {
   const canPost = !lastPostAt || cooldownMs <= 0
   const countdown = Math.max(0, Math.ceil(cooldownMs / 1000))
   const countdownText = [Math.floor(countdown / 86400), Math.floor((countdown % 86400) / 3600), Math.floor((countdown % 3600) / 60), countdown % 60].map(v => String(v).padStart(2, '0')).join(':')
-  const cooldownText = useMemo(() => {
-    if (!lastPostAt || canPost) return 'Ready to share'
-    const hours = Math.floor(cooldownMs / 3600000)
-    const mins = Math.floor((cooldownMs % 3600000) / 60000)
-    return `Next post in ${hours}h ${mins}m`
-  }, [lastPostAt, canPost, cooldownMs])
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? 'dark' : 'light'
     localStorage.setItem('dreambig-theme', darkMode ? 'dark' : 'light')
