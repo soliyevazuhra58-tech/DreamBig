@@ -57,6 +57,7 @@ select id,
  case when coalesce((visibility->>'bio')::boolean,false) then bio end as bio,
  case when coalesce((visibility->>'created_at')::boolean,false) then created_at end as created_at
 from private.dreamid_public_profiles;
+grant usage on schema private to anon, authenticated;
 grant select on private.dreamid_public to anon, authenticated;
 create view public.public_feed with (security_invoker = true) as
 select p.id,p.message,p.created_at,p.user_id,d.first_name,d.username,null::text as card_id
