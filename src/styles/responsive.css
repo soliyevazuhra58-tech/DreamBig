@@ -1,0 +1,21 @@
+/* Responsive layout refinements for phones, tablets and desktop screens. */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:82px;-webkit-text-size-adjust:100%}
+body{margin:0;min-width:320px;overflow-x:hidden}
+button,input,textarea,select{font:inherit}
+img,svg{max-width:100%}
+.app-shell{width:100%;min-height:100svh;overflow:clip}
+main{width:100%;max-width:1600px;margin-inline:auto}
+.topbar{position:sticky;top:0;z-index:25;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.hero,.feed-section,.how-section,.closing-cta{min-width:0}
+.hero-copy,.hero-panel,.post-card,.step{min-width:0}
+.post-message,.hero-sub,.section-description{overflow-wrap:anywhere}
+.modal-backdrop,.shared-dreamid-wrap{overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal{width:min(100%,560px);max-height:min(88svh,900px);overflow-y:auto;overscroll-behavior:contain}
+.form-stack input,.form-stack textarea,.form-stack select{width:100%;min-width:0}
+.dreamid-card{width:100%;max-width:100%;transform-origin:center}
+@media(min-width:1200px){.hero{padding-inline:max(7vw,70px)}.feed-section,.how-section{padding-inline:max(7vw,70px)}}
+@media(max-width:900px){.topbar{padding-inline:18px}.top-actions{min-width:0}.hero{grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr)}}
+@media(max-width:620px){.topbar{gap:8px;padding-inline:12px}.brand{flex-shrink:0}.top-actions{margin-left:auto;gap:5px}.top-actions>.btn{white-space:nowrap}.top-actions .btn-quiet{display:none}.profile-chip{max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.theme-toggle{flex:0 0 34px;width:34px;height:34px}.hero{padding-top:48px}.hero-meta{flex-wrap:wrap;gap:10px}.quick-facts{grid-template-columns:repeat(3,minmax(0,1fr))}.dreamid-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.dreamid-actions .btn:last-child{grid-column:1/-1}.modal{padding:22px 17px}.shared-dreamid-wrap{align-items:start;padding:12px}.dreamid-card{padding:18px 16px}.dreamid-card-name{font-size:18px}.dreamid-card>svg{width:58px;height:58px}}
+@media(max-width:380px){.brand{font-size:16px}.top-cta{font-size:9px!important;padding:8px!important}.top-cta svg{display:none}.hero h1{font-size:40px}.quick-facts span{font-size:7px}.quote-reel-top,.quote-reel-bottom{font-size:8px;letter-spacing:1px}}
+@media(hover:none){.dreamid-card:hover,.quote-reel-buttons button:hover{transform:none}}
