@@ -32,3 +32,21 @@ main{width:100%;max-width:1600px;margin-inline:auto}
 @media(max-width:620px){.admin-heading{align-items:flex-start}.admin-user-main{align-items:flex-start;flex-wrap:wrap}.admin-user-status{width:100%;padding-left:52px}.admin-user-actions{gap:6px}.admin-user-actions button{flex:1 1 42%;justify-content:center}.admin-search{width:100%}}
 
 .owner-claim-box{margin-top:28px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--glass-bg)}.owner-claim-box h3{margin:8px 0;font:700 17px Manrope}.owner-claim-box .modal-desc{margin-bottom:12px}
+
+/* Route-based pages */
+.app-shell[data-page="home"] #reels,.app-shell[data-page="home"] .admin-section,.app-shell[data-page="home"] .settings-page,.app-shell[data-page="home"] .not-found-page{display:none}
+.app-shell[data-page="reels"] main>.hero,.app-shell[data-page="reels"] main>.quick-facts,.app-shell[data-page="reels"] main>.feed-section,.app-shell[data-page="reels"] main>.how-section,.app-shell[data-page="reels"] main>.closing-cta,.app-shell[data-page="reels"] .admin-section,.app-shell[data-page="reels"] .settings-page,.app-shell[data-page="reels"] .not-found-page{display:none}
+.app-shell[data-page="search"] main>.hero,.app-shell[data-page="search"] main>.quick-facts,.app-shell[data-page="search"] #reels,.app-shell[data-page="search"] main>.how-section,.app-shell[data-page="search"] main>.closing-cta,.app-shell[data-page="search"] .admin-section,.app-shell[data-page="search"] .settings-page,.app-shell[data-page="search"] .not-found-page{display:none}
+.app-shell[data-page="settings"] main,.app-shell[data-page="settings"] .admin-section,.app-shell[data-page="settings"] .not-found-page{display:none}
+.app-shell[data-page="owner"] main,.app-shell[data-page="owner"] .settings-page,.app-shell[data-page="owner"] .not-found-page{display:none}
+.app-shell[data-page="owner"] .admin-section{display:block}.app-shell[data-page="owner"] footer{display:none}
+.app-shell[data-page="home"] .admin-section,.app-shell[data-page="reels"] .admin-section,.app-shell[data-page="search"] .admin-section{display:none}
+.app-shell[data-page="search"] main>.feed-section{display:block;min-height:calc(100svh - 150px)}
+.settings-page{max-width:900px;min-height:calc(100svh - 150px);margin:0 auto;padding:70px 24px 100px}
+.settings-page>h1{font:700 clamp(34px,6vw,54px) Manrope;letter-spacing:-2px;margin:15px 0 28px}.settings-page>h1 span{color:var(--accent)}
+.settings-profile-card,.settings-panel{padding:22px;margin:14px 0;border:1px solid var(--glass-border);border-radius:16px;background:var(--glass-bg);box-shadow:var(--glass-shadow)}
+.settings-profile-card{display:flex;align-items:center;gap:14px}.settings-profile-card>div:nth-child(2){display:grid;gap:5px;flex:1}.settings-profile-card span{font-size:12px;color:var(--muted)}.settings-profile-card .profile-large{margin:0}
+.settings-panel h2{font:700 20px Manrope;margin:0 0 8px;color:var(--ink)}.settings-panel .owner-claim-box{margin-top:22px}
+.not-found-page{min-height:75svh;display:grid;align-content:center;justify-items:center;text-align:center;padding:40px 20px}.not-found-page>span{font:800 clamp(80px,18vw,150px)/1 Manrope;letter-spacing:-8px;color:var(--accent)}.not-found-page h1{font:700 30px Manrope;margin:18px 0 8px}.not-found-page p{color:var(--muted);font-size:13px;margin:0 0 24px}
+.app-shell[data-page="reels"] main{max-width:none}.app-shell[data-page="reels"] #reels{display:block!important}.app-shell[data-page="reels"] footer{display:none}
+@media(max-width:620px){.settings-page{padding:45px 16px 100px}.settings-profile-card{flex-wrap:wrap}.settings-profile-card .btn{width:100%}.settings-panel{padding:17px}.app-shell[data-page="reels"]{padding-bottom:0}.app-shell[data-page="reels"] .mobile-app-nav{background:rgba(20,20,28,.78);border-color:#ffffff25}.app-shell[data-page="reels"] .mobile-app-nav button{color:#d5d2e4}.app-shell[data-page="reels"] .mobile-app-nav button.selected{background:#ffffff20;color:#fff}}
