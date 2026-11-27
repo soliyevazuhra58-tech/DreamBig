@@ -24,3 +24,18 @@
 .countdown-live{display:flex;align-items:center;gap:6px!important}.countdown-digits{display:inline-flex;font-variant-numeric:tabular-nums;letter-spacing:1.2px;font-weight:800;color:var(--accent);animation:countdown-pulse 1s ease-in-out infinite}.countdown-live small{font-size:8px;color:var(--muted)}.countdown-ready{color:#4d9b75!important}@keyframes card-arrive{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes holo-shift{0%,100%{filter:hue-rotate(0)}50%{filter:hue-rotate(70deg)}}@keyframes countdown-pulse{0%,100%{opacity:1}50%{opacity:.65}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 .header-countdown{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}.header-countdown b{letter-spacing:.7px;animation:countdown-pulse 1s infinite}@media(max-width:620px){.header-countdown{padding:7px 8px;font-size:9px;gap:4px}.header-countdown svg{width:12px}}
+/* DreamBig liquid-glass visual system */
+:root{--glass-bg:rgba(255,255,255,.58);--glass-border:rgba(255,255,255,.72);--glass-shadow:0 16px 48px rgba(42,35,94,.09)}
+:root[data-theme="dark"]{--glass-bg:rgba(28,29,42,.62);--glass-border:rgba(255,255,255,.12);--glass-shadow:0 18px 55px rgba(0,0,0,.28)}
+.topbar{background:var(--glass-bg);border:1px solid var(--glass-border);border-top:0;border-radius:0 0 18px 18px;box-shadow:var(--glass-shadow);backdrop-filter:blur(24px) saturate(165%);-webkit-backdrop-filter:blur(24px) saturate(165%)}
+.hero-panel,.post-card,.step,.search-box,.theme-toggle,.btn-outline,.modal,.visibility-row button{backdrop-filter:blur(22px) saturate(155%);-webkit-backdrop-filter:blur(22px) saturate(155%);box-shadow:var(--glass-shadow)}
+.hero-panel,.post-card,.step{background:var(--glass-bg);border-color:var(--glass-border);position:relative;overflow:hidden}
+.hero-panel:before,.post-card:before,.step:before,.modal:before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.28),transparent 42%,rgba(151,137,255,.06));}
+.post-card>* ,.step>* ,.hero-panel>* ,.modal>*{position:relative;z-index:1}
+.modal{background:color-mix(in srgb,var(--panel) 78%,transparent);border-color:var(--glass-border);box-shadow:0 25px 90px rgba(18,16,48,.22),inset 0 1px rgba(255,255,255,.45)}
+.search-box,.theme-toggle{background:var(--glass-bg);border-color:var(--glass-border)}
+.btn-primary{box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 25%,transparent)}
+.brand-logo-mark{font:800 21px/1 Manrope,sans-serif;letter-spacing:-2px;background:linear-gradient(145deg,#8e80ff,#5545c5);box-shadow:0 5px 16px rgba(101,87,217,.3);border:1px solid rgba(255,255,255,.4)}
+.dreamid-card .card-holo{display:none!important}
+@media(max-width:620px){.topbar{border-radius:0 0 14px 14px}}
+@media(prefers-reduced-transparency:reduce){.topbar,.hero-panel,.post-card,.step,.modal{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--panel)}}
