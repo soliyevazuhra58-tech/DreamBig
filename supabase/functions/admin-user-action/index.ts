@@ -27,11 +27,21 @@ Deno.serve(async (req: Request) => {
     });
     const { data: authData, error: authError } = await caller.auth.getUser(token);
     if (authError || !authData.user) return json({ error: "Invalid session." }, 401);
-    const { data: adminFlag, error: adminError } = await caller.rpc("is_dreambig_admin");
-    if (adminError || adminFlag !== true) return json({ error: "Admin access required." }, 403);
-
     const body = await req.json();
     const action = String(body.action ?? "");
+
+    if (action === "claim_owner") {
+      const claimCode = String(body.code ?? "").trim();
+      if (claimCode.length < 20 || claimCode.length > 120) return json({ error: "Invalid owner activation code." }, 400);
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(claimCode));
+      const tokenHash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+      const { data: claimed, error: claimError } = await caller.rpc("claim_dreambig_owner", { p_token_hash: tokenHash });
+      if (claimError || claimed !== true) return json({ error: claimError?.message || "Owner activation failed." }, 400);
+      return json({ ok: true, message: "Owner access activated. Your username is now @owner." });
+    }
+
+    const { data: adminFlag, error: adminError } = await caller.rpc("is_dreambig_admin");
+    if (adminError || adminFlag !== true) return json({ error: "Admin access required." }, 403);
     const targetId = String(body.userId ?? "");
     const reason = String(body.reason ?? "").trim().slice(0, 240);
     if (!targetId) return json({ error: "Target user is required." }, 400);
