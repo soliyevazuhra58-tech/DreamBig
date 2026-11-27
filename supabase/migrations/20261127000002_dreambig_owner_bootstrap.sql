@@ -17,8 +17,8 @@ create table if not exists public.dreambig_owner_claim (
 );
 alter table public.dreambig_owner_claim enable row level security;
 revoke all on public.dreambig_owner_claim from anon, authenticated;
-insert into public.dreambig_owner_claim(id,token_hash)
-values (true,'efd84f0d78a692ed9e9628872bd94537d9eb22b751edaa02501c9d66ec1e03e4') on conflict (id) do nothing;
+insert into public.dreambig_owner_claim(id,token_hash) values (true,null) on conflict (id) do nothing;
+-- Provision the one-time token hash directly in Supabase, never in source control.
 
 create or replace function public.guard_dreambig_reserved_username()
 returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
