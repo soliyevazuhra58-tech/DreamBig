@@ -24,6 +24,7 @@ create table if not exists public.dreambig_admins (
 );
 alter table public.dreambig_admins enable row level security;
 revoke all on public.dreambig_admins from anon, authenticated;
+drop policy if exists "Admins can read their own admin flag" on public.dreambig_admins;
 create policy "Admins can read their own admin flag" on public.dreambig_admins
 for select to authenticated using ((select auth.uid()) = user_id);
 grant select on public.dreambig_admins to authenticated;
