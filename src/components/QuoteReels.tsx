@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Pause, Play, Quote, Sparkles } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Heart, Sparkles } from 'lucide-react'
 import './quote-reels.css'
-
 type QuoteItem = { text: string; author: string; category: string }
-
 const quotes: QuoteItem[] = [
   { text: 'The future changes when you give today a clear direction.', author: 'DreamBig', category: 'PURPOSE' },
   { text: 'You do not need a perfect plan. You need the courage to begin.', author: 'DreamBig', category: 'COURAGE' },
@@ -18,62 +16,32 @@ const quotes: QuoteItem[] = [
   { text: 'Protect your focus. Give your best energy to what matters.', author: 'DreamBig', category: 'FOCUS' },
   { text: 'Every expert was once a beginner who kept asking questions.', author: 'DreamBig', category: 'LEARNING' },
 ]
-
+const STORAGE_KEY = 'dreambig-reels-likes-v1'
 export default function QuoteReels() {
-  const [active, setActive] = useState(0)
-  const [playing, setPlaying] = useState(true)
-  const [progress, setProgress] = useState(0)
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const current = quotes[active]
-  const next = () => { setActive(value => (value + 1) % quotes.length); setProgress(0) }
-  const previous = () => { setActive(value => (value - 1 + quotes.length) % quotes.length); setProgress(0) }
-
-  useEffect(() => {
-    if (!playing) return
-    const started = Date.now()
-    const duration = 7000
-    const tick = window.setInterval(() => {
-      const elapsed = Date.now() - started
-      setProgress(Math.min(100, elapsed / duration * 100))
-      if (elapsed >= duration) {
-        setActive(value => (value + 1) % quotes.length)
-        setProgress(0)
-      }
-    }, 80)
-    return () => window.clearInterval(tick)
-  }, [active, playing])
-
-  const count = useMemo(() => String(active + 1).padStart(2, '0'), [active])
-
-  return <section className="quote-reels-section" aria-label="Inspirational quote reels">
-    <div className="quote-reels-heading">
-      <div><div className="eyebrow"><span className="eyebrow-line"/> A MOMENT OF INSPIRATION</div><h2>Quote <span>reels.</span></h2></div>
-      <p>Swipe, pause, and find a thought worth keeping.</p>
-    </div>
-    <div className="quote-reels-layout">
-      <div className="quote-reel-card" key={active} onTouchStart={event => setTouchStart(event.changedTouches[0]?.clientX ?? null)} onTouchEnd={event => { if (touchStart === null) return; const delta = event.changedTouches[0].clientX - touchStart; if (Math.abs(delta) > 45) delta < 0 ? next() : previous(); setTouchStart(null) }}>
-        <div className="quote-reel-progress" aria-label={`Quote ${active + 1} of ${quotes.length}`}>
-          {quotes.map((quote, index) => <span key={quote.text} className="quote-reel-track"><i style={{ width: index < active ? '100%' : index === active ? `${progress}%` : '0%' }}/></span>)}
+  const [liked, setLiked] = useState<boolean[]>(() => {
+    try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); return quotes.map((_, i) => Boolean(saved[i])) }
+    catch { return quotes.map(() => false) }
+  })
+  const totalLikes = useMemo(() => liked.filter(Boolean).length, [liked])
+  function toggleLike(index: number) {
+    setLiked(previous => {
+      const next = previous.map((value, i) => i === index ? !value : value)
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch { /* storage unavailable */ }
+      return next
+    })
+  }
+  return <section className="quote-reels-page" aria-label="Inspirational vertical reels">
+    <div className="reels-topbar"><div><span className="eyebrow"><span className="eyebrow-line"/> DREAMBIG DAILY</span><h1>Reels <span>for your mind.</span></h1></div><span className="reels-like-total"><Heart size={14} fill="currentColor"/> {totalLikes} liked</span></div>
+    <div className="quote-reels-feed">
+      {quotes.map((item, index) => <article className="quote-reel-screen" key={item.category}>
+        <div className="reel-screen-bg" aria-hidden="true"><span>{String(index + 1).padStart(2, '0')}</span></div>
+        <div className="reel-screen-content">
+          <div className="reel-screen-meta"><span><Sparkles size={14}/> DREAMBIG DAILY</span><span>{item.category}</span></div>
+          <div className="reel-screen-quote"><span className="reel-quote-mark">“</span><h2>{item.text}</h2><p>— {item.author}</p></div>
+          <div className="reel-screen-footer"><span>TAKE WHAT YOU NEED. KEEP MOVING.</span><button type="button" className={liked[index] ? 'reel-like-button liked' : 'reel-like-button'} onClick={() => toggleLike(index)} aria-pressed={liked[index]} aria-label={liked[index] ? 'Unlike this reel' : 'Like this reel'}><Heart size={23} fill={liked[index] ? 'currentColor' : 'none'}/><b>{liked[index] ? 'Liked' : 'Like'}</b></button></div>
         </div>
-        <div className="quote-reel-top"><span><Sparkles size={14}/> DREAMBIG DAILY</span><span>{count} / {String(quotes.length).padStart(2, '0')}</span></div>
-        <div className="quote-reel-content" aria-live="polite">
-          <span className="quote-reel-category">{current.category}</span>
-          <Quote className="quote-reel-mark" size={30}/>
-          <h3>{current.text}</h3>
-          <div className="quote-reel-author"><span className="quote-reel-avatar">D</span><span><strong>{current.author}</strong><small>A thought for your journey</small></span></div>
-        </div>
-        <div className="quote-reel-bottom"><span>TAKE WHAT YOU NEED. KEEP MOVING.</span><span className="quote-reel-spark">✳</span></div>
-      </div>
-      <div className="quote-reel-controls">
-        <div className="quote-reel-counter"><strong>{count}</strong><span>of {String(quotes.length).padStart(2, '0')} thoughts</span></div>
-        <div className="quote-reel-buttons">
-          <button type="button" onClick={previous} aria-label="Previous quote"><ArrowLeft size={18}/></button>
-          <button type="button" className="quote-reel-play" onClick={() => setPlaying(value => !value)} aria-label={playing ? 'Pause reels' : 'Play reels'}>{playing ? <Pause size={17}/> : <Play size={17}/>}</button>
-          <button type="button" onClick={next} aria-label="Next quote"><ArrowRight size={18}/></button>
-        </div>
-        <div className="quote-reel-hint">Auto-advances every 7 seconds. Use arrows or swipe on mobile.</div>
-        <div className="quote-reel-dots">{quotes.map((quote, index) => <button key={quote.text} type="button" aria-label={`Go to quote ${index + 1}`} aria-current={index === active ? 'step' : undefined} onClick={() => { setActive(index); setProgress(0) }}/>)}</div>
-      </div>
+        <span className="reel-index">{String(index + 1).padStart(2, '0')} / {String(quotes.length).padStart(2, '0')}</span>
+      </article>)}
     </div>
   </section>
 }
