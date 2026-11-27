@@ -51,9 +51,12 @@ Deno.serve(async (req: Request) => {
     const { data: target, error: targetError } = await admin.from("profiles").select("id,username").eq("id", targetId).maybeSingle();
     if (targetError || !target) return json({ error: "User not found." }, 404);
 
+    const { data: targetAdmin } = await admin.from("dreambig_admins").select("user_id").eq("user_id", targetId).maybeSingle();
+    if (targetAdmin && ["ban", "unban", "delete"].includes(action)) {
+      return json({ error: "Admin accounts are protected from ban and deletion." }, 403);
+    }
+
     if (action === "delete") {
-      const { data: roles } = await admin.from("dreambig_admins").select("user_id").eq("user_id", targetId).maybeSingle();
-      if (roles) return json({ error: "Admin accounts cannot be deleted from this panel." }, 403);
       const { error } = await admin.auth.admin.deleteUser(targetId);
       if (error) return json({ error: error.message }, 400);
       return json({ ok: true, message: `@${target.username} account deleted.` });
