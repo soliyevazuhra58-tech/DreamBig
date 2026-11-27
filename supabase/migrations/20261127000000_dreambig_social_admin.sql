@@ -18,17 +18,23 @@ drop trigger if exists profiles_dreamid_weekly_edit on public.profiles;
 create trigger profiles_dreamid_weekly_edit before update on public.profiles
 for each row execute function public.enforce_dreamid_weekly_edit();
 
--- Admins are explicitly allow-listed; never grant admin status from client input.
-create table if not exists public.dreambig_admins (user_id uuid primary key references auth.users(id) on delete cascade, created_at timestamptz not null default now());
+create table if not exists public.dreambig_admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
 alter table public.dreambig_admins enable row level security;
 revoke all on public.dreambig_admins from anon, authenticated;
+create policy "Admins can read their own admin flag" on public.dreambig_admins
+for select to authenticated using ((select auth.uid()) = user_id);
+grant select on public.dreambig_admins to authenticated;
+
 create or replace function public.is_dreambig_admin()
-returns boolean language sql stable security definer set search_path=public as $$
-  select exists(select 1 from public.dreambig_admins where user_id=auth.uid());
+returns boolean language sql stable security invoker set search_path=public as $$
+  select auth.uid() is not null and exists(select 1 from public.dreambig_admins where user_id=auth.uid());
 $$;
+revoke all on function public.is_dreambig_admin() from public, anon;
 grant execute on function public.is_dreambig_admin() to authenticated;
 
--- Owners may edit or delete only their own posts; admins can moderate any post.
 drop policy if exists "Users can edit own posts" on public.posts;
 create policy "Users can edit own posts" on public.posts for update to authenticated
 using ((select auth.uid())=user_id) with check ((select auth.uid())=user_id);
