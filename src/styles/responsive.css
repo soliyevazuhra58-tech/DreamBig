@@ -38,7 +38,7 @@ main{width:100%;max-width:1600px;margin-inline:auto}
 .app-shell[data-page="reels"] main>.hero,.app-shell[data-page="reels"] main>.quick-facts,.app-shell[data-page="reels"] main>.feed-section,.app-shell[data-page="reels"] main>.how-section,.app-shell[data-page="reels"] main>.closing-cta,.app-shell[data-page="reels"] .admin-section,.app-shell[data-page="reels"] .settings-page,.app-shell[data-page="reels"] .not-found-page{display:none}
 .app-shell[data-page="search"] main>.hero,.app-shell[data-page="search"] main>.quick-facts,.app-shell[data-page="search"] #reels,.app-shell[data-page="search"] main>.how-section,.app-shell[data-page="search"] main>.closing-cta,.app-shell[data-page="search"] .admin-section,.app-shell[data-page="search"] .settings-page,.app-shell[data-page="search"] .not-found-page{display:none}
 .app-shell[data-page="settings"] main,.app-shell[data-page="settings"] .admin-section,.app-shell[data-page="settings"] .not-found-page{display:none}
-.app-shell[data-page="owner"] main,.app-shell[data-page="owner"] .settings-page,.app-shell[data-page="owner"] .not-found-page{display:none}
+.app-shell[data-page="owner"] main,.app-shell[data-page="owner"] .settings-page{display:none}
 .app-shell[data-page="owner"] .admin-section{display:block}.app-shell[data-page="owner"] footer{display:none}
 .app-shell[data-page="home"] .admin-section,.app-shell[data-page="reels"] .admin-section,.app-shell[data-page="search"] .admin-section{display:none}
 .app-shell[data-page="search"] main>.feed-section{display:block;min-height:calc(100svh - 150px)}
