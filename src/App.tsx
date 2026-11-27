@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, ArrowUpRight, BadgeCheck, Clock3, Compass, Heart, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Target, UserRound, X, Moon, Sun, Home, Film, Pencil, Trash2, Shield, LayoutDashboard } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BadgeCheck, Clock3, Compass, Heart, MessageCircle, Plus, Search, ShieldCheck, Sparkles, Target, UserRound, X, Moon, Sun, Home, Film, Pencil, Trash2, Shield, LayoutDashboard, Ban, UserCheck, LockKeyhole, Globe, RefreshCw } from 'lucide-react'
 import type { Session } from '@supabase/supabase-js'
 import { Settings, Eye, EyeOff, Download, Share2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -8,9 +8,10 @@ import { toPng } from 'html-to-image'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import QuoteReels from './components/QuoteReels'
 
-type Profile = { dreamid_changed_at?: string | null; id: string; first_name: string; last_name: string; username: string; card_id: string; date_of_birth: string; gender: string; country?: string | null; city?: string | null; bio?: string; avatar_url?: string | null; visibility?: Record<string, boolean>; created_at: string }
+type Profile = { dreamid_changed_at?: string | null; is_banned?: boolean; is_verified?: boolean; is_private?: boolean; id: string; first_name: string; last_name: string; username: string; card_id: string; date_of_birth: string; gender: string; country?: string | null; city?: string | null; bio?: string; avatar_url?: string | null; visibility?: Record<string, boolean>; created_at: string }
 type PublicDreamID = { id:string; avatar_url:string|null; first_name:string|null; last_name:string|null; username:string|null; date_of_birth:string|null; gender:string|null; country:string|null; city:string|null; bio:string|null; created_at:string|null }
-type Post = { id: string; message: string; created_at: string; user_id: string; first_name: string; username: string; card_id: string }
+type Post = { id: string; message: string; created_at: string; user_id: string; first_name: string; username: string; card_id: string; is_verified?: boolean }
+type AdminUser = { id:string; first_name:string; last_name:string; username:string; created_at:string; is_banned:boolean; ban_reason:string|null; is_verified:boolean; is_private:boolean }
 
 const samplePosts: Post[] = [
   { id: 'sample-1', user_id: 'a', message: 'Your future is built by what you do today, not what you plan to do tomorrow.', created_at: new Date(Date.now() - 1000 * 60 * 34).toISOString(), first_name: 'Amina', username: 'aminavibes', card_id: 'DB-A8F31C2D' },
@@ -42,6 +43,9 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [activeTab, setActiveTab] = useState('home')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
+  const [adminSearch, setAdminSearch] = useState('')
+  const [adminLoading, setAdminLoading] = useState(false)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [editMessage, setEditMessage] = useState('')
   const [showEditDreamID, setShowEditDreamID] = useState(false)
@@ -58,8 +62,9 @@ export default function App() {
     if (!supabase) return
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
     if (error) { setNotice(error.message); return }
+    if (data?.is_banned) { setNotice('Your DreamBig account is suspended. Contact an administrator.'); setProfile(null); setIsAdmin(false); setSession(null); await supabase.auth.signOut(); return }
     setProfile(data as Profile | null)
-    if (data) { const { data: admin } = await supabase.rpc('is_dreambig_admin'); setIsAdmin(Boolean(admin)) }
+    if (data) { const { data: admin } = await supabase.rpc('is_dreambig_admin'); setIsAdmin(Boolean(admin)) } else setIsAdmin(false)
     if (data?.visibility) setVisibility(data.visibility)
     if (!data) setShowProfile(true)
     if (data) {
@@ -74,6 +79,16 @@ export default function App() {
     if (!error && data) setPosts(data as Post[])
   }, [])
 
+  const loadAdminUsers = useCallback(async () => {
+    if (!supabase || !isAdmin) return
+    setAdminLoading(true)
+    const { data, error } = await supabase.from('profiles').select('id,first_name,last_name,username,created_at,is_banned,ban_reason,is_verified,is_private').order('created_at',{ascending:false}).limit(200)
+    if (error) setNotice(error.message); else setAdminUsers((data ?? []) as AdminUser[])
+    setAdminLoading(false)
+  }, [isAdmin])
+
+  useEffect(() => { if (isAdmin) void loadAdminUsers(); else setAdminUsers([]) }, [isAdmin, loadAdminUsers])
+
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
     let active = true
@@ -86,7 +101,7 @@ export default function App() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next)
       if (next) void loadProfile(next.user.id)
-      else { setProfile(null); setLastPostAt(null) }
+      else { setProfile(null); setLastPostAt(null); setIsAdmin(false); setAdminUsers([]) }
     })
     void loadPosts()
     return () => { active = false; listener.subscription.unsubscribe() }
@@ -122,6 +137,7 @@ export default function App() {
   }, [profile, lastPostAt, cooldownMs])
 
   const visiblePosts = useMemo(() => posts.filter(post => `${post.first_name} @${post.username} ${post.message}`.toLowerCase().includes(search.toLowerCase())), [posts, search])
+  const filteredAdminUsers = useMemo(() => adminUsers.filter(user => `${user.first_name} ${user.last_name} @${user.username}`.toLowerCase().includes(adminSearch.toLowerCase())), [adminUsers, adminSearch])
   const dreamIDLocked = Boolean(profile?.dreamid_changed_at && clock - new Date(profile.dreamid_changed_at).getTime() < 7 * 86400000)
   const dreamIDUnlockAt = profile?.dreamid_changed_at ? new Date(new Date(profile.dreamid_changed_at).getTime() + 7 * 86400000) : null
   const profileEmoji = profile?.gender === 'male' ? '👨🏻' : profile?.gender === 'female' ? '👩🏻' : '👤'
@@ -130,6 +146,19 @@ export default function App() {
   async function savePostEdit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); if(!supabase||!profile||!editingPost||!editMessage.trim())return; setBusy(true); const {error}=await supabase.from('posts').update({message:editMessage.trim()}).eq('id',editingPost.id).eq('user_id',profile.id); if(error)setNotice(error.message); else {setEditingPost(null);setEditMessage('');await loadPosts();setNotice('Post updated.')} setBusy(false) }
   async function deletePost(post: Post) { if(!supabase||!profile||!window.confirm('Ushbu postni o‘chirmoqchimisiz?'))return; const {error}=await supabase.from('posts').delete().eq('id',post.id).eq('user_id',profile.id); if(error)setNotice(error.message); else {await loadPosts();setNotice('Post deleted.')} }
   async function adminDeletePost(post: Post) { if(!supabase||!isAdmin||!window.confirm('Admin sifatida ushbu postni o‘chirasizmi?'))return; const {error}=await supabase.from('posts').delete().eq('id',post.id); if(error)setNotice(error.message); else {await loadPosts();setNotice('Post removed by admin.')} }
+
+  async function adminUserAction(user: AdminUser, action: string) {
+    if (!supabase || !isAdmin || (user.id === profile?.id && ['ban','delete'].includes(action))) return
+    let reason = ''
+    if (action === 'ban') { const answer = window.prompt('Ban sababi (ixtiyoriy):','Community guidelines violation'); if (answer === null) return; reason = answer }
+    if (action === 'delete' && !window.confirm(`@${user.username} akkaunti, profili va postlarini butunlay o‘chirishni tasdiqlaysizmi? Bu amalni ortga qaytarib bo‘lmaydi.`)) return
+    if (action !== 'delete' && action !== 'ban' && !window.confirm(`@${user.username} uchun ushbu amalni bajarasizmi?`)) return
+    setBusy(true)
+    const { data, error } = await supabase.functions.invoke('admin-user-action',{body:{action,userId:user.id,reason}})
+    if (error || data?.error) setNotice(data?.error || error?.message || 'Admin action failed.')
+    else { setNotice(data?.message || 'User updated.'); await loadAdminUsers(); await loadPosts() }
+    setBusy(false)
+  }
 
   async function startDreaming() {
     if (!supabase) { setNotice('Connect Supabase to create your DreamID.'); return }
@@ -250,7 +279,7 @@ export default function App() {
       <section className="feed-section" id="feed">
         <div className="section-heading"><div><div className="eyebrow"><span className="eyebrow-line"/> COMMUNITY</div><h2>Ideas worth<br className="mobile-break"/> <span>sharing.</span></h2></div><p className="section-description">A collection of thoughts from people moving forward. Find one that stays with you.</p></div>
         <div className="feed-toolbar"><div className="feed-label"><Compass size={16}/> Latest thoughts <span>{visiblePosts.length}</span></div><label className="search-box"><Search size={15}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search thoughts or people"/></label></div>
-        <div className="post-grid">{visiblePosts.map(post => <article className="post-card" key={post.id}><div className="post-card-head"><div className="post-user"><div className="post-avatar">{post.first_name?.[0] ?? 'D'}</div><div><strong>{post.first_name}</strong><span>@{post.username}</span></div></div><span className="post-time">{timeAgo(post.created_at)}</span></div><p className="post-message">{post.message}</p><div className="post-card-foot"><span><BadgeCheck size={13}/> DreamBig member</span><span className="inspire-tag"><Heart size={13}/> Keep going</span></div>{profile?.id===post.user_id && <div className="post-owner-actions"><button type="button" onClick={()=>{setEditingPost(post);setEditMessage(post.message)}}><Pencil size={13}/> Edit</button><button type="button" onClick={()=>void deletePost(post)}><Trash2 size={13}/> Delete</button></div>}{isAdmin && profile?.id!==post.user_id && <div className="post-owner-actions"><button type="button" onClick={()=>void adminDeletePost(post)}><Shield size={13}/> Remove</button></div>}</article>)}</div>
+        <div className="post-grid">{visiblePosts.map(post => <article className="post-card" key={post.id}><div className="post-card-head"><div className="post-user"><div className="post-avatar">{post.first_name?.[0] ?? 'D'}</div><div><strong>{post.first_name} {post.is_verified && <span className="verified-mark" title="Verified DreamBig account"><BadgeCheck size={13}/></span>}</strong><span>@{post.username}</span></div></div><span className="post-time">{timeAgo(post.created_at)}</span></div><p className="post-message">{post.message}</p><div className="post-card-foot"><span><BadgeCheck size={13}/> DreamBig member</span><span className="inspire-tag"><Heart size={13}/> Keep going</span></div>{profile?.id===post.user_id && <div className="post-owner-actions"><button type="button" onClick={()=>{setEditingPost(post);setEditMessage(post.message)}}><Pencil size={13}/> Edit</button><button type="button" onClick={()=>void deletePost(post)}><Trash2 size={13}/> Delete</button></div>}{isAdmin && profile?.id!==post.user_id && <div className="post-owner-actions"><button type="button" onClick={()=>void adminDeletePost(post)}><Shield size={13}/> Remove</button></div>}</article>)}</div>
         {visiblePosts.length === 0 && <div className="empty-state">No thoughts found. Try another search.</div>}
         {!isSupabaseConfigured && <div className="demo-note"><Sparkles size={14}/> Preview mode · Connect Supabase to create DreamIDs and publish live thoughts.</div>}
         <div className="feed-bottom"><span>One thoughtful post. Every 24 hours.</span><button className="btn btn-outline" onClick={() => profile ? setShowComposer(true) : void startDreaming()}>Share your thought <ArrowUpRight size={15}/></button></div>
@@ -259,7 +288,7 @@ export default function App() {
       <section className="how-section" id="how"><div className="eyebrow"><span className="eyebrow-line"/> HOW IT WORKS</div><h2>Simple from the <span>start.</span></h2><div className="steps"><article className="step"><span>01</span><UserRound/><h3>Create your DreamID</h3><p>Choose a username, add a few details, and receive your unique CardID.</p></article><article className="step"><span>02</span><MessageCircle/><h3>Share one thought</h3><p>Post a quote, lesson, or idea that could brighten someone's day.</p></article><article className="step"><span>03</span><Target/><h3>Grow together</h3><p>Explore the community and discover perspectives worth remembering.</p></article></div></section>
       <section className="closing-cta"><div className="eyebrow"><span className="eyebrow-line"/> START WHERE YOU ARE</div><h2>Think clearly.<br/><span>Dream boldly.</span></h2><p>Your next idea might be exactly what someone needs.</p><button className="btn btn-primary btn-large" onClick={() => profile ? setShowComposer(true) : void startDreaming()}>Join DreamBig <ArrowRight size={16}/></button></section>
     </main>
-    {isAdmin && <section className="admin-section" id="admin-panel"><div className="eyebrow"><span className="eyebrow-line"/> ADMINISTRATION</div><h2><LayoutDashboard size={22}/> Admin panel</h2><p className="section-description">Community moderation tools. Admin access is granted securely from Supabase.</p><div className="admin-stats"><div><strong>{posts.length}</strong><span>Loaded posts</span></div><div><strong>{posts.filter(p=>p.created_at.slice(0,10)===new Date().toISOString().slice(0,10)).length}</strong><span>Today's posts</span></div></div><div className="admin-list">{posts.map(post=><div className="admin-row" key={post.id}><div><b>{post.first_name} · @{post.username}</b><p>{post.message}</p></div><button type="button" onClick={()=>void adminDeletePost(post)}><Trash2 size={14}/> Remove</button></div>)}</div></section>}
+    {isAdmin && <section className="admin-section" id="admin-panel"><div className="admin-heading"><div><div className="eyebrow"><span className="eyebrow-line"/> OWNER CONSOLE</div><h2><LayoutDashboard size={22}/> Admin panel</h2><p className="section-description">Manage DreamBig members, safety and community content.</p></div><button className="btn btn-outline" onClick={()=>{void loadAdminUsers();void loadPosts()}} disabled={adminLoading}><RefreshCw size={14}/> Refresh</button></div><div className="admin-stats"><div><strong>{adminUsers.length}</strong><span>Users</span></div><div><strong>{adminUsers.filter(u=>u.is_verified).length}</strong><span>Verified</span></div><div><strong>{adminUsers.filter(u=>u.is_banned).length}</strong><span>Banned</span></div><div><strong>{posts.length}</strong><span>Loaded posts</span></div></div><div className="admin-subheading"><h3><UserRound size={17}/> User management</h3><label className="admin-search"><Search size={15}/><input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Search by name or @username"/></label></div>{adminLoading ? <p className="admin-empty">Loading users…</p> : <div className="admin-users">{filteredAdminUsers.map(user=><article className="admin-user-card" key={user.id}><div className="admin-user-main"><div className="admin-user-avatar">{user.first_name?.[0]||'D'}</div><div className="admin-user-info"><b>{user.first_name} {user.last_name} {user.is_verified&&<BadgeCheck size={14} className="verified-mark"/>}</b><span>@{user.username}</span><small>Joined {new Date(user.created_at).toLocaleDateString()} · {user.is_private?'Private profile':'Public profile'}</small>{user.is_banned&&<small className="admin-ban-note">Banned · {user.ban_reason||'No reason provided'}</small>}</div><div className="admin-user-status">{user.is_banned?<span className="status-pill danger">Banned</span>:<span className="status-pill good">Active</span>}{user.is_verified&&<span className="status-pill verified">Verified</span>}</div></div><div className="admin-user-actions"><button onClick={()=>void adminUserAction(user,user.is_verified?'unverify':'verify')} disabled={busy}><BadgeCheck size={14}/>{user.is_verified?'Remove verify':'Verify'}</button><button onClick={()=>void adminUserAction(user,user.is_banned?'unban':'ban')} disabled={busy||user.id===profile?.id}>{user.is_banned?<UserCheck size={14}/>:<Ban size={14}/>} {user.is_banned?'Unban':'Ban'}</button><button onClick={()=>void adminUserAction(user,user.is_private?'make_public':'make_private')} disabled={busy}>{user.is_private?<Globe size={14}/>:<LockKeyhole size={14}/>} {user.is_private?'Make public':'Make private'}</button><button className="danger-action" onClick={()=>void adminUserAction(user,'delete')} disabled={busy||user.id===profile?.id}><Trash2 size={14}/> Delete</button></div></article>)}</div>}{filteredAdminUsers.length===0&&!adminLoading&&<p className="admin-empty">No users found.</p>}<div className="admin-subheading admin-post-heading"><h3><MessageCircle size={17}/> Post moderation</h3><span>{posts.length} recent posts</span></div><div className="admin-list">{posts.map(post=><div className="admin-row" key={post.id}><div><b>{post.first_name} · @{post.username}</b><p>{post.message}</p></div><button type="button" onClick={()=>void adminDeletePost(post)}><Trash2 size={14}/> Remove post</button></div>)}</div></section>}
     <footer><a className="brand" href="#"><span className="brand-mark brand-logo-mark" aria-hidden="true">D</span><span>dreambig<span className="brand-period">.</span></span></a><span>© 2026 DreamBig</span><a href="#feed">Back to top ↑</a></footer>
 
     {sharedDreamID && <div className="shared-dreamid-wrap"><section className="modal shared-dreamid"><div className="dreamid-card"><div className="dreamid-card-head"><span className="card-brand">DREAMBIG</span><span>IDENTITY CARD</span></div><div className="card-chip" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div><div className="dreamid-card-name">{sharedDreamID.first_name || ''} {sharedDreamID.last_name || ''}</div>{sharedDreamID.username && <p>@{sharedDreamID.username}</p>}{sharedDreamID.date_of_birth && <p>Date of birth · {sharedDreamID.date_of_birth}</p>}{sharedDreamID.gender && <p>Gender · {sharedDreamID.gender}</p>}{sharedDreamID.country && <p>Country · {sharedDreamID.country}</p>}{sharedDreamID.city && <p>City · {sharedDreamID.city}</p>}{sharedDreamID.bio && <p>{sharedDreamID.bio}</p>}{sharedDreamID.created_at && <small>Member since {new Date(sharedDreamID.created_at).toLocaleDateString()}</small>}<div className="dreamid-card-foot">MY IDENTITY · MY JOURNEY</div></div><button className="btn btn-outline btn-full" onClick={()=>{window.history.replaceState({},'',window.location.pathname);setSharedDreamID(null)}}>Close shared DreamID</button></section></div>}
